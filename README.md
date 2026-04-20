@@ -28,7 +28,7 @@ Built for research administrators, compliance officers, and policy analysts.
 4. Set all 7 tools to **Always allow**
 5. Open a new conversation and ask about federal regulations
 
-See [CONNECTING_TO_CLAUDE.md](CONNECTING_TO_CLAUDE.md) for detailed instructions.
+See [docs/CONNECTING_TO_CLAUDE.md](docs/CONNECTING_TO_CLAUDE.md) for detailed instructions.
 
 ## Available Tools
 

@@ -231,6 +231,6 @@ The Space rebuilds automatically after each upload (~1-2 minutes).
 | `src/__init__.py` | Makes `src/` importable as a package |
 | `requirements.txt` | Minimal deps for HF Spaces (httpx, mcp, pydantic) |
 | `README.md` | HF Space metadata + project docs |
-| `CONNECTING_TO_CLAUDE.md` | User guide for connecting the MCP server to Claude |
+| `docs/CONNECTING_TO_CLAUDE.md` | User guide for connecting the MCP server to Claude |
 | `.env` | HF token (gitignored, not deployed) |
 | `requirements-hf.txt` | Backup of the HF-specific requirements |
