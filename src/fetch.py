@@ -58,7 +58,7 @@ def _check_url(url: str) -> str | None:
 class _Text(HTMLParser):
     """Visible text of an HTML document: scripts, styles and nav dropped, block boundaries kept."""
 
-    _SKIP = {"script", "style", "noscript", "template", "svg", "head"}
+    _SKIP = {"script", "style", "noscript", "template", "svg"}   # head keeps only <title>, since meta and link carry no text
     _BLOCK = {"p", "div", "br", "li", "ul", "ol", "tr", "table", "section", "article", "header", "footer",
               "h1", "h2", "h3", "h4", "h5", "h6", "dt", "dd", "blockquote", "pre", "hr", "nav", "aside", "main"}
     _CELL = {"td", "th"}
