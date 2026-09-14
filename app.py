@@ -387,15 +387,13 @@ async def fetch_document(url: str, offset: str = "0", max_chars: str = "12000") 
     opportunity record (dates, ceiling, cost sharing, synopsis, attachment links) from the grants.gov API;
     fetch the full-announcement PDF it lists in a second call. NSF and other script-rendered pages have no
     text: ask for the PDF link. Long documents come back in pages: when the result says truncated, call
-    again with offset = next_offset.
+    again with offset = next_offset. When replying to a person about a fetched announcement, include
+    the url as a markdown link so they can open the original, and the attachment links when listed.
 
     Args:
         url: The http(s) address of the page or PDF.
         offset: Character position to start from. Default '0'.
         max_chars: Characters to return, 1000-40000. Default '12000'.
-
-    When replying to a person about a fetched announcement, include the url as a markdown link so
-    they can open the original, and the attachment links when the record lists them.
 
     Returns:
         JSON with url, kind (html, pdf, text, grants.gov), title, total_chars, offset, returned_chars, truncated, next_offset and text; or an error.
