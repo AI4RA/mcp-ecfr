@@ -357,6 +357,10 @@ async def grants_gov_search(
     START HERE when the user wants to find a funding announcement. Then pass a hit's link to
     fetch_document for the full record and its attachment PDFs.
 
+    When replying to a person, list the hits as a numbered markdown list, one line each: the title as
+    a markdown link to the hit's link, then agency, status and close date. The person can click the
+    link to open the announcement on grants.gov. Offer to fetch one for details or to start a budget.
+
     Args:
         keyword: Search words, e.g. 'research security', 'wildfire smoke health', or an opportunity number like 'PD-25-275Y'.
         statuses: Pipe-separated: posted, forecasted, closed, archived. Default 'posted|forecasted'.
@@ -390,8 +394,11 @@ async def fetch_document(url: str, offset: str = "0", max_chars: str = "12000") 
         offset: Character position to start from. Default '0'.
         max_chars: Characters to return, 1000-40000. Default '12000'.
 
+    When replying to a person about a fetched announcement, include the url as a markdown link so
+    they can open the original, and the attachment links when the record lists them.
+
     Returns:
-        JSON with url, kind (html, pdf, text), title, total_chars, offset, returned_chars, truncated, next_offset and text; or an error.
+        JSON with url, kind (html, pdf, text, grants.gov), title, total_chars, offset, returned_chars, truncated, next_offset and text; or an error.
     """
     import json
     result = await _fetch_document(url, offset=_to_int(offset, 0), max_chars=_to_int(max_chars, 12000))
