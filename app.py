@@ -20,6 +20,7 @@ from src.server import (
     ecfr_compare_regulations as _ecfr_compare_regulations,
     regulatory_index as _regulatory_index,
 )
+from src.fetch import fetch_document as _fetch_document, grants_gov_search as _grants_gov_search
 
 
 # -- Type conversion helpers --
@@ -342,6 +343,60 @@ async def ecfr_compare_regulations(
 
 # -- Gradio App --
 
+
+async def grants_gov_search(
+    keyword: str,
+    statuses: str = "posted|forecasted",
+    agencies: str = "",
+    categories: str = "",
+    rows: str = "10",
+    start: str = "0",
+) -> str:
+    """Search federal funding opportunities on grants.gov (RFAs, NOFOs, program solicitations, BAAs).
+
+    START HERE when the user wants to find a funding announcement. Then pass a hit's link to
+    fetch_document for the full record and its attachment PDFs.
+
+    Args:
+        keyword: Search words, e.g. 'research security', 'wildfire smoke health', or an opportunity number like 'PD-25-275Y'.
+        statuses: Pipe-separated: posted, forecasted, closed, archived. Default 'posted|forecasted'.
+        agencies: Pipe-separated agency codes to narrow, e.g. 'NSF', 'HHS', 'USDA', 'DOD'. Leave empty for all; the result lists codes with counts.
+        categories: Pipe-separated funding category codes, e.g. 'ST' (science and technology), 'ED', 'HL', 'EN'. Leave empty for all.
+        rows: Hits to return, 1-50. Default '10'.
+        start: Record to start from, for paging. Default '0'.
+
+    Returns:
+        JSON with hit_count, hits (id, number, title, agency, status, open/close dates, link), the agency facet, and next_start when more remain.
+    """
+    import json
+    result = await _grants_gov_search(
+        keyword, statuses=statuses or "posted|forecasted", agencies=agencies or "", categories=categories or "",
+        rows=_to_int(rows, 10), start=_to_int(start, 0),
+    )
+    return json.dumps(result, ensure_ascii=False)
+
+
+async def fetch_document(url: str, offset: str = "0", max_chars: str = "12000") -> str:
+    """Read a public web page or PDF as plain text, e.g. a funding announcement (RFA, NOFO, solicitation), a policy page or a sponsor guide.
+
+    Use when the user gives a link instead of pasting text. A grants.gov opportunity link returns the
+    opportunity record (dates, ceiling, cost sharing, synopsis, attachment links) from the grants.gov API;
+    fetch the full-announcement PDF it lists in a second call. NSF and other script-rendered pages have no
+    text: ask for the PDF link. Long documents come back in pages: when the result says truncated, call
+    again with offset = next_offset.
+
+    Args:
+        url: The http(s) address of the page or PDF.
+        offset: Character position to start from. Default '0'.
+        max_chars: Characters to return, 1000-40000. Default '12000'.
+
+    Returns:
+        JSON with url, kind (html, pdf, text), title, total_chars, offset, returned_chars, truncated, next_offset and text; or an error.
+    """
+    import json
+    result = await _fetch_document(url, offset=_to_int(offset, 0), max_chars=_to_int(max_chars, 12000))
+    return json.dumps(result, ensure_ascii=False)
+
 with gr.Blocks(title="eCFR MCP Server") as demo:
     gr.Markdown("""
 # eCFR MCP Server
@@ -360,6 +415,8 @@ Built for research administrators, compliance officers, and policy analysts.
 | `ecfr_get_regulation` | Retrieve regulatory text for a specific section |
 | `ecfr_get_title_structure` | Get table of contents for a CFR title |
 | `ecfr_compare_regulations` | Compare regulatory text between two dates |
+| `grants_gov_search` | Search grants.gov for funding opportunities (RFAs, NOFOs, solicitations) |
+| `fetch_document` | Read a public web page or PDF (a funding announcement, a policy page) as text |
 
 ## Connect via MCP
 
@@ -375,6 +432,8 @@ MCP endpoint: **`/gradio_api/mcp/sse`**
     gr.api(ecfr_get_regulation, api_name="ecfr_get_regulation")
     gr.api(ecfr_get_title_structure, api_name="ecfr_get_title_structure")
     gr.api(ecfr_compare_regulations, api_name="ecfr_compare_regulations")
+    gr.api(grants_gov_search, api_name="grants_gov_search")
+    gr.api(fetch_document, api_name="fetch_document")
 
 if __name__ == "__main__":
     demo.launch(mcp_server=True, server_name="0.0.0.0")

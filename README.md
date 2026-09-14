@@ -41,6 +41,8 @@ See [docs/CONNECTING_TO_CLAUDE.md](docs/CONNECTING_TO_CLAUDE.md) for detailed in
 | `ecfr_mcp_server_ecfr_get_regulation` | Retrieve regulatory text for a specific section |
 | `ecfr_mcp_server_ecfr_get_title_structure` | Get table of contents for a CFR title |
 | `ecfr_mcp_server_ecfr_compare_regulations` | Compare regulatory text between two dates |
+| `ecfr_mcp_server_grants_gov_search` | Search grants.gov for funding opportunities (RFAs, NOFOs, solicitations) |
+| `ecfr_mcp_server_fetch_document` | Read a public web page or PDF as text; a grants.gov opportunity link returns its record and attachment links |
 
 ## Duplicate This Space
 
