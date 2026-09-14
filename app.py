@@ -390,7 +390,9 @@ async def fetch_document(url: str, offset: str = "0", max_chars: str = "12000") 
     text: ask for the PDF link. Long documents come back in pages: when the result says truncated, call
     again with offset = next_offset. When replying to a person about a fetched announcement, include
     the url as a markdown link so they can open the original, and the attachment links when listed.
-    Call this tool by the exact name it is listed under (it carries this server's prefix).
+    Call this tool by the exact name it is listed under (it carries this server's prefix). Fetch only addresses
+    the user gave, that a tool returned, or that you know exactly (a site's home page); never guess a path. On
+    HTTP 404 do not try other guessed paths: fetch the site's home page once if that helps, otherwise ask for the link.
 
     Args:
         url: The http(s) address of the page or PDF.

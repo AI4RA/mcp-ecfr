@@ -260,6 +260,8 @@ async def fetch_document(url: str, offset: int = 0, max_chars: int = 12_000) -> 
     except httpx.HTTPError as e:
         return {"error": f"could not fetch: {e}", "url": current}
 
+    if resp.status_code == 404:
+        return {"error": "HTTP 404: there is no page at that address. Do not guess another path; use an address the user gave or a tool returned, or fetch the site's home page.", "url": current}
     if resp.status_code >= 400:
         return {"error": f"HTTP {resp.status_code}", "url": current}
     body = resp.content
