@@ -73,7 +73,7 @@ class _Text(HTMLParser):
     def handle_starttag(self, tag, attrs):
         if tag in self._SKIP:
             self._skip += 1
-        elif tag == "title":
+        elif tag == "title" and not self._skip and not self.title:   # the document's title, not an SVG icon's
             self._in_title = True
         elif tag in self._BLOCK:
             self.parts.append("\n")
@@ -202,6 +202,28 @@ async def _fetch_grants_gov(opp_id: str) -> tuple[str, str]:
     return _grants_gov_text(data)
 
 
+class _Refused(Exception):
+    def __init__(self, message: str, url: str):
+        super().__init__(message)
+        self.url = url
+
+
+async def _get_following_redirects(url: str, verify: bool):
+    """GET with each redirect target re-checked against the public-address rule. Returns (response, final url)."""
+    async with httpx.AsyncClient(follow_redirects=False, timeout=TIMEOUT_S, headers={"User-Agent": USER_AGENT}, verify=verify) as client:
+        current = url
+        for _ in range(MAX_REDIRECTS + 1):
+            resp = await client.get(current)
+            if resp.is_redirect and resp.headers.get("location"):
+                current = str(resp.next_request.url) if resp.next_request else resp.headers["location"]
+                reason = _check_url(current)
+                if reason:
+                    raise _Refused(f"refused after redirect: {reason}", current)
+                continue
+            return resp, current
+        raise _Refused("too many redirects", current)
+
+
 async def fetch_document(url: str, offset: int = 0, max_chars: int = 12_000) -> dict:
     """Fetch a public web page or PDF and return its text from `offset`, at most `max_chars` characters."""
     url = (url or "").strip()
@@ -219,19 +241,24 @@ async def fetch_document(url: str, offset: int = 0, max_chars: int = 12_000) -> 
             return {"error": f"grants.gov opportunity {opp_id} could not be read: {e}", "url": url}
         return _page(url, "grants.gov", title, text, offset, max_chars)
 
-    async with httpx.AsyncClient(follow_redirects=False, timeout=TIMEOUT_S, headers={"User-Agent": USER_AGENT}) as client:
-        current = url
-        for _ in range(MAX_REDIRECTS + 1):
-            resp = await client.get(current)
-            if resp.is_redirect and resp.headers.get("location"):
-                current = str(resp.next_request.url) if resp.next_request else resp.headers["location"]
-                reason = _check_url(current)
-                if reason:
-                    return {"error": f"refused after redirect: {reason}", "url": current}
-                continue
-            break
-        else:
-            return {"error": "too many redirects", "url": current}
+    current = url
+    tls_unverified = False
+    try:
+        resp, current = await _get_following_redirects(url, verify=True)
+    except httpx.ConnectError as e:
+        if "CERTIFICATE_VERIFY_FAILED" not in str(e):
+            return {"error": f"could not connect: {e}", "url": current}
+        # The site's certificate chain does not verify against this server's trust store (a missing
+        # intermediate, usually). Read it anyway for this public, read-only fetch, and say so in the result.
+        try:
+            resp, current = await _get_following_redirects(url, verify=False)
+            tls_unverified = True
+        except httpx.HTTPError as e2:
+            return {"error": f"could not connect: {e2}", "url": current}
+    except _Refused as e:
+        return {"error": str(e), "url": e.url}
+    except httpx.HTTPError as e:
+        return {"error": f"could not fetch: {e}", "url": current}
 
     if resp.status_code >= 400:
         return {"error": f"HTTP {resp.status_code}", "url": current}
@@ -259,7 +286,11 @@ async def fetch_document(url: str, offset: int = 0, max_chars: int = 12_000) -> 
 
     if not text:
         return {"error": "no readable text was found (an image-only PDF or a script-rendered page; for grants.gov, give the opportunity link, for NSF, the solicitation PDF)", "url": current, "kind": kind}
-    return _page(current, kind, title, text, offset, max_chars)
+    out = _page(current, kind, title, text, offset, max_chars)
+    if tls_unverified:
+        out["tls_unverified"] = True
+        out["note"] = "The site's certificate could not be verified, so this text was read without TLS verification; treat it as unconfirmed."
+    return out
 
 
 def _page(url: str, kind: str, title: str, text: str, offset: int, max_chars: int) -> dict:

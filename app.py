@@ -381,7 +381,7 @@ async def grants_gov_search(
 
 
 async def fetch_document(url: str, offset: str = "0", max_chars: str = "12000") -> str:
-    """Read a public web page or PDF as plain text, e.g. a funding announcement (RFA, NOFO, solicitation), a policy page or a sponsor guide.
+    """Read any public web page, PDF or grants.gov opportunity by its URL and return the text. Use it to look up a website the user names, a funding announcement (RFA, NOFO, solicitation), a policy page or a sponsor guide.
 
     Use when the user gives a link instead of pasting text. A grants.gov opportunity link returns the
     opportunity record (dates, ceiling, cost sharing, synopsis, attachment links) from the grants.gov API;
