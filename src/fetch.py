@@ -288,6 +288,12 @@ async def fetch_document(url: str, offset: int = 0, max_chars: int = 12_000) -> 
 
     if not text:
         return {"error": "no readable text was found (an image-only PDF or a script-rendered page; for grants.gov, give the opportunity link, for NSF, the solicitation PDF)", "url": current, "kind": kind}
+    # An application shell: a page whose HTML is nearly all scripts and holds only a few words (Esploro research
+    # portals, many single-page apps). Say so rather than hand back the stub as if it were the page.
+    if kind == "html" and len(text) < 300 and resp.text.count("<script") >= 3:
+        return {"error": "this page is rendered by scripts in the browser; the fetch returned only its shell (" + text[:120].replace("\n", " ") + "). "
+                         "The content cannot be read this way. Ask the user for the information, a PDF or a plain-HTML page, or use it only as a link.",
+                "url": current, "kind": "html", "title": title, "script_rendered": True}
     out = _page(current, kind, title, text, offset, max_chars)
     if tls_unverified:
         out["tls_unverified"] = True
