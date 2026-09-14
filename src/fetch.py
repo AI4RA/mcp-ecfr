@@ -184,7 +184,7 @@ def _grants_gov_text(d: dict) -> tuple[str, str]:
                 atts.append(f"- {a.get('fileName', '')} ({folder.get('folderType', '')}; {a.get('mimeType', '')}): "
                             f"{GRANTS_GOV_ATTACHMENT.format(id=a['id'])}")
     if atts:
-        lines += ["", "## Attachments (fetch the full announcement PDF with fetch_document)"] + atts
+        lines += ["", "## Attachments (read the full announcement PDF with the fetch_document tool)"] + atts
     urls = [f"- {u.get('description', '')}: {u.get('docUrl', '')}" for u in d.get("synopsisDocumentURLs") or [] if u.get("docUrl")]
     if urls:
         lines += ["", "## Related links"] + urls
@@ -364,7 +364,7 @@ async def grants_gov_search(keyword: str, statuses: str = "posted|forecasted", a
         "hits": hits,
         "agencies": [{"code": a.get("value"), "name": a.get("label"), "count": a.get("count")}
                      for a in (data.get("agencies") or [])[:25]],
-        "note": "Pass a hit's link to fetch_document for the full record, its synopsis and its attachment PDFs.",
+        "note": "Pass a hit's link to the fetch_document tool (listed under this server's prefix) for the full record, its synopsis and its attachment PDFs.",
     }
     if data.get("suggestion"):
         out["suggestion"] = data["suggestion"]

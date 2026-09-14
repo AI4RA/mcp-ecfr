@@ -354,8 +354,9 @@ async def grants_gov_search(
 ) -> str:
     """Search federal funding opportunities on grants.gov (RFAs, NOFOs, program solicitations, BAAs).
 
-    START HERE when the user wants to find a funding announcement. Then pass a hit's link to
-    fetch_document for the full record and its attachment PDFs.
+    START HERE when the user wants to find a funding announcement. Then pass a hit's link to the
+    fetch_document tool (listed with this server's prefix, e.g. ecfr_mcp_server_fetch_document) for the
+    full record and its attachment PDFs.
 
     When replying to a person, list the hits as a numbered markdown list, one line each: the title as
     a markdown link to the hit's link, then agency, status and close date. The person can click the
@@ -389,6 +390,7 @@ async def fetch_document(url: str, offset: str = "0", max_chars: str = "12000") 
     text: ask for the PDF link. Long documents come back in pages: when the result says truncated, call
     again with offset = next_offset. When replying to a person about a fetched announcement, include
     the url as a markdown link so they can open the original, and the attachment links when listed.
+    Call this tool by the exact name it is listed under (it carries this server's prefix).
 
     Args:
         url: The http(s) address of the page or PDF.
